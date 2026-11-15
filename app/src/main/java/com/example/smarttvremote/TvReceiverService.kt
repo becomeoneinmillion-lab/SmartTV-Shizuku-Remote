@@ -100,7 +100,7 @@ class TvReceiverService : Service() {
                 arrayOf("sh", "-c", "appops set $packageName SYSTEM_ALERT_WINDOW allow"),
                 null,
                 null
-            ) as Process
+            ) as java.lang.Process
             proc.waitFor()
 
             // 2. Bind directly to Android's internal IInputManager for 0ms latency injection
@@ -173,7 +173,6 @@ class TvReceiverService : Service() {
             lineTo(30f, 25f)
             close()
         }
-        // White pointer with thick black border for high contrast on TV
         val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
             style = Paint.Style.FILL
@@ -200,13 +199,11 @@ class TvReceiverService : Service() {
                 } catch (_: Exception) {}
             }
         }
-        // Also send hover move so TV UI elements highlight under the pointer
         injectHoverMove(cursorX, cursorY)
     }
 
     private fun injectEventFast(event: InputEvent) {
         try {
-            // Mode 0 = INJECT_INPUT_EVENT_MODE_ASYNC (Zero blocking lag!)
             injectInputEventMethod?.invoke(inputManagerInstance, event, 0)
         } catch (_: Exception) {}
     }
@@ -271,7 +268,6 @@ class TvReceiverService : Service() {
                 while (isActive) {
                     val client = serverSocket!!.accept()
                     client.tcpNoDelay = true
-                    // Handle each phone connection in its own coroutine so reconnects never block
                     launch {
                         try {
                             val reader = BufferedReader(InputStreamReader(client.getInputStream()))
