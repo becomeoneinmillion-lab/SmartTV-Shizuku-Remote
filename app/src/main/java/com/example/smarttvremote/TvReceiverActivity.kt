@@ -62,14 +62,20 @@ class TvReceiverActivity : AppCompatActivity() {
             }
         } else {
             tvStatus.text = "Shizuku is not running on TV!\nStart Shizuku first, then reopen this screen."
-            // Still show QR for testing connection even if Shizuku isn't active yet
             startQrServer()
         }
     }
 
     private fun initShizukuShell() {
         try {
-            val process = Shizuku.newProcess(arrayOf("sh"), null, null)
+            val newProcessMethod = Shizuku::class.java.getDeclaredMethod(
+                "newProcess",
+                Array<String>::class.java,
+                Array<String>::class.java,
+                String::class.java
+            )
+            newProcessMethod.isAccessible = true
+            val process = newProcessMethod.invoke(null, arrayOf("sh"), null, null) as Process
             shizukuShellIn = process.outputStream
         } catch (e: Exception) {
             tvStatus.text = "Shizuku Shell Error: ${e.localizedMessage}"
@@ -164,4 +170,3 @@ class TvReceiverActivity : AppCompatActivity() {
         try { serverSocket?.close() } catch (_: Exception) {}
     }
 }
-
