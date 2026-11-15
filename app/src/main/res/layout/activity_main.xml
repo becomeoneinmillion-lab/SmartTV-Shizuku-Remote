@@ -4,9 +4,9 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="#121212"
-    android:padding="12dp">
+    android:padding="10dp">
 
-    <!-- Top Mode / Pairing Bar -->
+    <!-- Top Pairing Bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -19,61 +19,45 @@
             android:layout_weight="1"
             android:backgroundTint="#1E88E5"
             android:textColor="#FFFFFF"
-            android:text="Scan TV QR Code" />
+            android:text="Scan QR" />
+
+        <Button
+            android:id="@+id/btnToggleView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.2"
+            android:layout_marginHorizontal="6dp"
+            android:backgroundTint="#8E24AA"
+            android:textColor="#FFFFFF"
+            android:text="Switch: TV Remote" />
 
         <Button
             android:id="@+id/btnOpenTvMode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
             android:backgroundTint="#424242"
             android:textColor="#FFFFFF"
-            android:text="TV Mode (QR)" />
-    </LinearLayout>
-
-    <!-- Manual IP Fallback Bar -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="4dp">
-
-        <EditText
-            android:id="@+id/etManualIp"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="Or enter IP:Port|Token"
-            android:textColor="#FFFFFF"
-            android:textColorHint="#777777"
-            android:textSize="13sp"
-            android:singleLine="true" />
-
-        <Button
-            android:id="@+id/btnManualConnect"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Connect" />
+            android:text="TV Mode" />
     </LinearLayout>
 
     <TextView
         android:id="@+id/tvStatus"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Status: Tap 'Scan TV QR Code' to pair"
+        android:text="Status: Disconnected (Tap Scan QR)"
         android:textColor="#00E676"
-        android:textSize="13sp"
+        android:textSize="12sp"
         android:paddingVertical="4dp" />
 
-    <!-- Trackpad + Dedicated Scroll Bar -->
+    <!-- VIEW 1: Trackpad + Dedicated Scroll Bar -->
     <LinearLayout
+        android:id="@+id/layoutMousePad"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:orientation="horizontal"
-        android:layout_marginTop="6dp">
+        android:visibility="visible">
 
-        <!-- Mouse Trackpad -->
         <FrameLayout
             android:id="@+id/trackpadArea"
             android:layout_width="0dp"
@@ -86,15 +70,13 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:text="MOUSE TRACKPAD\n\n• Slide to Move Cursor\n• Single Tap = Left Click\n• Double Tap = TV OK Button"
-                android:textColor="#666666"
-                android:textSize="14sp" />
+                android:text="60FPS MOUSE TRACKPAD\n\n• Slide = Move TV Cursor\n• Single Tap = Click\n• Double Tap = TV OK"
+                android:textColor="#666666" />
         </FrameLayout>
 
-        <!-- Dedicated Right-Side Scroll Bar -->
         <FrameLayout
             android:id="@+id/scrollBarArea"
-            android:layout_width="56dp"
+            android:layout_width="54dp"
             android:layout_height="match_parent"
             android:layout_marginStart="8dp"
             android:background="#2C2C2C">
@@ -104,53 +86,72 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:rotation="90"
-                android:text="SCROLL BAR"
-                android:textColor="#999999"
+                android:text="SCROLL"
+                android:textColor="#AAAAAA"
                 android:textStyle="bold" />
         </FrameLayout>
     </LinearLayout>
 
-    <!-- Bottom Controls & Keyboard Trigger -->
+    <!-- VIEW 2: Full Smart TV Remote Pad -->
+    <LinearLayout
+        android:id="@+id/layoutTvRemote"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="#1A1A1A"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <!-- Power / Mute / Menu Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button android:id="@+id/btnPower" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:backgroundTint="#D32F2F" android:textColor="#FFF" android:text="Power" />
+            <Button android:id="@+id/btnMute" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginHorizontal="8dp" android:text="Mute" />
+            <Button android:id="@+id/btnMenu" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Menu" />
+        </LinearLayout>
+
+        <!-- D-Pad Navigation -->
+        <Button android:id="@+id/btnDpadUp" android:layout_width="110dp" android:layout_height="56dp" android:layout_marginTop="16dp" android:text="▲ UP" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginVertical="6dp">
+            <Button android:id="@+id/btnDpadLeft" android:layout_width="100dp" android:layout_height="56dp" android:text="◀ LEFT" />
+            <Button android:id="@+id/btnDpadCenter" android:layout_width="90dp" android:layout_height="56dp" android:layout_marginHorizontal="8dp" android:backgroundTint="#1E88E5" android:textColor="#FFF" android:text="OK" />
+            <Button android:id="@+id/btnDpadRight" android:layout_width="100dp" android:layout_height="56dp" android:text="RIGHT ▶" />
+        </LinearLayout>
+        <Button android:id="@+id/btnDpadDown" android:layout_width="110dp" android:layout_height="56dp" android:layout_marginBottom="16dp" android:text="▼ DOWN" />
+
+        <!-- Volume & Channel Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button android:id="@+id/btnVolDown" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Vol -" />
+            <Button android:id="@+id/btnVolUp" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginHorizontal="6dp" android:text="Vol +" />
+            <Button android:id="@+id/btnChDown" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginEnd="6dp" android:text="CH -" />
+            <Button android:id="@+id/btnChUp" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="CH +" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Bottom Always-Visible Bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="10dp">
+        android:layout_marginTop="8dp">
 
-        <Button
-            android:id="@+id/btnBack"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Back" />
-
-        <Button
-            android:id="@+id/btnOk"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginHorizontal="6dp"
-            android:text="OK" />
-
-        <Button
-            android:id="@+id/btnHome"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginEnd="6dp"
-            android:text="Home" />
-
-        <Button
-            android:id="@+id/btnKeyboard"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.2"
-            android:backgroundTint="#43A047"
-            android:textColor="#FFFFFF"
-            android:text="Keyboard" />
+        <Button android:id="@+id/btnBack" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Back" />
+        <Button android:id="@+id/btnHome" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginHorizontal="6dp" android:text="Home" />
+        <Button android:id="@+id/btnPlayPause" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginEnd="6dp" android:text="⏯" />
+        <Button android:id="@+id/btnKeyboard" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.2" android:backgroundTint="#43A047" android:textColor="#FFFFFF" android:text="Keyboard" />
     </LinearLayout>
 
-    <!-- Hidden EditText to capture phone soft keyboard strokes -->
     <EditText
         android:id="@+id/etHiddenKeyboard"
         android:layout_width="1dp"
@@ -158,4 +159,3 @@
         android:alpha="0"
         android:inputType="textNoSuggestions" />
 </LinearLayout>
-
