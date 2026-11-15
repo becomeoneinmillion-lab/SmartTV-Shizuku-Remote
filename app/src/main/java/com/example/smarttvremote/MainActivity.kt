@@ -10,31 +10,33 @@ import android.text.TextWatcher
 import android.view.GestureDetector
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.io.PrintWriter
+import java.net.InetSocketAddress
 import java.net.Socket
 import kotlin.math.abs
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var tvStatus: TextView
-    private lateinit var etManualIp: EditText
     private lateinit var etHiddenKeyboard: EditText
-    private val ioScope = CoroutineScope(Dispatchers.IO)
+    private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    private var socketWriter: PrintWriter? = null
-    private var activeToken: String = ""
+    @Volatile private var socketWriter: PrintWriter? = null
+    private var savedIp = ""
+    private var savedPort = 8989
+    private var activeToken = ""
 
     private val qrScannerLauncher = registerForActivityResult(ScanContract()) { result ->
         if (result.contents != null) {
-            etManualIp.setText(result.contents)
+            getSharedPreferences("remote_prefs", MODE_PRIVATE).edit()
+                .putString("last_qr", result.contents).apply()
             parseAndConnect(result.contents)
         }
     }
@@ -42,7 +44,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Auto-launch TV QR Mode if running on an Android TV
         val uiModeManager = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
         if (uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION) {
             startActivity(Intent(this, TvReceiverActivity::class.java))
@@ -53,33 +54,40 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         tvStatus = findViewById(R.id.tvStatus)
-        etManualIp = findViewById(R.id.etManualIp)
         etHiddenKeyboard = findViewById(R.id.etHiddenKeyboard)
 
-        val trackpadArea = findViewById<FrameLayout>(R.id.trackpadArea)
-        val scrollBarArea = findViewById<FrameLayout>(R.id.scrollBarArea)
+        val layoutMousePad = findViewById<LinearLayout>(R.id.layoutMousePad)
+        val layoutTvRemote = findViewById<LinearLayout>(R.id.layoutTvRemote)
+        val btnToggleView = findViewById<Button>(R.id.btnToggleView)
 
-        // 1. Scan QR Code Button
+        // Switch between Mouse Trackpad and Full TV Remote
+        btnToggleView.setOnClickListener {
+            if (layoutMousePad.visibility == View.VISIBLE) {
+                layoutMousePad.visibility = View.GONE
+                layoutTvRemote.visibility = View.VISIBLE
+                btnToggleView.text = "Switch: Mouse Pad"
+            } else {
+                layoutMousePad.visibility = View.VISIBLE
+                layoutTvRemote.visibility = View.GONE
+                btnToggleView.text = "Switch: TV Remote"
+            }
+        }
+
         findViewById<Button>(R.id.btnScanQr).setOnClickListener {
             val options = ScanOptions().apply {
-                setPrompt("Scan the QR Code displayed on your Smart TV")
+                setPrompt("Scan the QR Code on your Smart TV")
                 setBeepEnabled(false)
                 setOrientationLocked(false)
             }
             qrScannerLauncher.launch(options)
         }
 
-        // Manual Switch to TV Mode
         findViewById<Button>(R.id.btnOpenTvMode).setOnClickListener {
             startActivity(Intent(this, TvReceiverActivity::class.java))
         }
 
-        // Manual String Connect Fallback
-        findViewById<Button>(R.id.btnManualConnect).setOnClickListener {
-            parseAndConnect(etManualIp.text.toString().trim())
-        }
-
-        // 2. Trackpad Gestures (Move, Single Tap Click, Double-Tap -> TV OK)
+        // High-Speed 60FPS Trackpad
+        val trackpadArea = findViewById<FrameLayout>(R.id.trackpadArea)
         val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
             override fun onDown(e: MotionEvent): Boolean = true
 
@@ -94,8 +102,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
-                val dx = (-distanceX * 1.4f).toInt()
-                val dy = (-distanceY * 1.4f).toInt()
+                val dx = (-distanceX * 1.8f).toInt()
+                val dy = (-distanceY * 1.8f).toInt()
                 if (dx != 0 || dy != 0) {
                     sendCommand("MOUSE_MOVE:$dx,$dy")
                 }
@@ -108,14 +116,14 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-        // 3. Dedicated Right-Side Scroll Bar
+        // Smooth Scroll Bar
         var lastScrollY = 0f
-        scrollBarArea.setOnTouchListener { _, event ->
+        findViewById<FrameLayout>(R.id.scrollBarArea).setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> lastScrollY = event.y
                 MotionEvent.ACTION_MOVE -> {
                     val deltaY = event.y - lastScrollY
-                    if (abs(deltaY) > 22f) {
+                    if (abs(deltaY) > 18f) {
                         if (deltaY > 0) sendCommand("SCROLL_DOWN")
                         else sendCommand("SCROLL_UP")
                         lastScrollY = event.y
@@ -125,10 +133,24 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-        // 4. Bottom Navigation & Keyboard
+        // TV Remote Buttons
+        findViewById<Button>(R.id.btnPower).setOnClickListener { sendCommand("KEY_POWER") }
+        findViewById<Button>(R.id.btnMute).setOnClickListener { sendCommand("KEY_MUTE") }
+        findViewById<Button>(R.id.btnMenu).setOnClickListener { sendCommand("KEY_MENU") }
+        findViewById<Button>(R.id.btnDpadUp).setOnClickListener { sendCommand("KEY_UP") }
+        findViewById<Button>(R.id.btnDpadDown).setOnClickListener { sendCommand("KEY_DOWN") }
+        findViewById<Button>(R.id.btnDpadLeft).setOnClickListener { sendCommand("KEY_LEFT") }
+        findViewById<Button>(R.id.btnDpadRight).setOnClickListener { sendCommand("KEY_RIGHT") }
+        findViewById<Button>(R.id.btnDpadCenter).setOnClickListener { sendCommand("KEY_OK") }
+        findViewById<Button>(R.id.btnVolUp).setOnClickListener { sendCommand("KEY_VOL_UP") }
+        findViewById<Button>(R.id.btnVolDown).setOnClickListener { sendCommand("KEY_VOL_DOWN") }
+        findViewById<Button>(R.id.btnChUp).setOnClickListener { sendCommand("KEY_CH_UP") }
+        findViewById<Button>(R.id.btnChDown).setOnClickListener { sendCommand("KEY_CH_DOWN") }
+
+        // Bottom Bar Buttons
         findViewById<Button>(R.id.btnBack).setOnClickListener { sendCommand("KEY_BACK") }
-        findViewById<Button>(R.id.btnOk).setOnClickListener { sendCommand("KEY_OK") }
         findViewById<Button>(R.id.btnHome).setOnClickListener { sendCommand("KEY_HOME") }
+        findViewById<Button>(R.id.btnPlayPause).setOnClickListener { sendCommand("KEY_PLAY_PAUSE") }
 
         findViewById<Button>(R.id.btnKeyboard).setOnClickListener {
             etHiddenKeyboard.requestFocus()
@@ -137,31 +159,36 @@ class MainActivity : AppCompatActivity() {
         }
 
         setupKeyboardForwarding()
+
+        // Auto-reconnect to last scanned TV on launch
+        val lastQr = getSharedPreferences("remote_prefs", MODE_PRIVATE).getString("last_qr", null)
+        if (lastQr != null) parseAndConnect(lastQr)
     }
 
     private fun parseAndConnect(qrString: String) {
-        // Expected Format: IP|PORT|TOKEN
         val parts = qrString.split("|")
-        if (parts.size != 3) {
-            Toast.makeText(this, "Invalid QR format", Toast.LENGTH_SHORT).show()
-            return
-        }
-        val ip = parts[0]
-        val port = parts[1].toIntOrNull() ?: 8989
+        if (parts.size != 3) return
+        savedIp = parts[0]
+        savedPort = parts[1].toIntOrNull() ?: 8989
         activeToken = parts[2]
+        connectSocket()
+    }
 
-        tvStatus.text = "Status: Connecting to $ip:$port..."
+    private fun connectSocket() {
+        if (savedIp.isEmpty()) return
         ioScope.launch {
             try {
-                val socket = Socket(ip, port)
+                val socket = Socket()
+                socket.connect(InetSocketAddress(savedIp, savedPort), 2500)
                 socket.tcpNoDelay = true
+                socket.keepAlive = true
                 socketWriter = PrintWriter(socket.getOutputStream(), true)
-                runOnUiThread {
-                    tvStatus.text = "Status: Connected to $ip (Ready)"
+                withContext(Dispatchers.Main) {
+                    tvStatus.text = "Connected to TV ($savedIp) • 60FPS Direct Mode"
                 }
             } catch (e: Exception) {
-                runOnUiThread {
-                    tvStatus.text = "Error: ${e.localizedMessage}"
+                withContext(Dispatchers.Main) {
+                    tvStatus.text = "Disconnected: Tap Scan QR (${e.localizedMessage})"
                 }
             }
         }
@@ -172,8 +199,7 @@ class MainActivity : AppCompatActivity() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 if (!s.isNullOrEmpty()) {
-                    val lastChar = s.last()
-                    sendCommand("TEXT:$lastChar")
+                    sendCommand("TEXT:${s.last()}")
                     etHiddenKeyboard.setText("")
                 }
             }
@@ -192,10 +218,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun sendCommand(cmd: String) {
-        val writer = socketWriter ?: return
         ioScope.launch {
-            writer.println("$activeToken|$cmd")
+            try {
+                val writer = socketWriter
+                if (writer == null || writer.checkError()) {
+                    connectSocket()
+                } else {
+                    writer.println("$activeToken|$cmd")
+                }
+            } catch (_: Exception) {
+                connectSocket()
+            }
         }
     }
-}
 
+    override fun onDestroy() {
+        ioScope.cancel()
+        super.onDestroy()
+    }
+}
