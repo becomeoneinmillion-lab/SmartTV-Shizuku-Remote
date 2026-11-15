@@ -1,1 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#121212"
+    android:padding="12dp">
+
+    <!-- Top Mode / Pairing Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnScanQr"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:backgroundTint="#1E88E5"
+            android:textColor="#FFFFFF"
+            android:text="Scan TV QR Code" />
+
+        <Button
+            android:id="@+id/btnOpenTvMode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:backgroundTint="#424242"
+            android:textColor="#FFFFFF"
+            android:text="TV Mode (QR)" />
+    </LinearLayout>
+
+    <!-- Manual IP Fallback Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="4dp">
+
+        <EditText
+            android:id="@+id/etManualIp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Or enter IP:Port|Token"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#777777"
+            android:textSize="13sp"
+            android:singleLine="true" />
+
+        <Button
+            android:id="@+id/btnManualConnect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Connect" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Status: Tap 'Scan TV QR Code' to pair"
+        android:textColor="#00E676"
+        android:textSize="13sp"
+        android:paddingVertical="4dp" />
+
+    <!-- Trackpad + Dedicated Scroll Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:layout_marginTop="6dp">
+
+        <!-- Mouse Trackpad -->
+        <FrameLayout
+            android:id="@+id/trackpadArea"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="#1E1E1E">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="MOUSE TRACKPAD\n\n• Slide to Move Cursor\n• Single Tap = Left Click\n• Double Tap = TV OK Button"
+                android:textColor="#666666"
+                android:textSize="14sp" />
+        </FrameLayout>
+
+        <!-- Dedicated Right-Side Scroll Bar -->
+        <FrameLayout
+            android:id="@+id/scrollBarArea"
+            android:layout_width="56dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="8dp"
+            android:background="#2C2C2C">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:rotation="90"
+                android:text="SCROLL BAR"
+                android:textColor="#999999"
+                android:textStyle="bold" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <!-- Bottom Controls & Keyboard Trigger -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp">
+
+        <Button
+            android:id="@+id/btnBack"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Back" />
+
+        <Button
+            android:id="@+id/btnOk"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="6dp"
+            android:text="OK" />
+
+        <Button
+            android:id="@+id/btnHome"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="6dp"
+            android:text="Home" />
+
+        <Button
+            android:id="@+id/btnKeyboard"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.2"
+            android:backgroundTint="#43A047"
+            android:textColor="#FFFFFF"
+            android:text="Keyboard" />
+    </LinearLayout>
+
+    <!-- Hidden EditText to capture phone soft keyboard strokes -->
+    <EditText
+        android:id="@+id/etHiddenKeyboard"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:alpha="0"
+        android:inputType="textNoSuggestions" />
+</LinearLayout>
 
